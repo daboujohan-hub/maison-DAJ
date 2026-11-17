@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LA MAISON, un mécanicien de poche pour les projets Python cassés</title>
+<meta name="description" content="LA MAISON répare les projets Python cassés dans Termux, sans internet, toujours sur une copie. Elle ne ment jamais.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏠%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f2f6fb; --grid:rgba(20,60,110,.07); --ink:#12294a; --muted:#46607f;
+  --line:#1d4b86; --soft:#c3d4ea; --panel:#ffffff;
+  --accent:#f2b705; --on-accent:#12294a;
+  --ok:#17784f; --bad:#b83a24; --warn:#8a6100; --info:#245fb8;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e2746; --grid:rgba(160,200,255,.08); --ink:#eaf2ff; --muted:#9fb7d9;
+    --line:#8fb4e8; --soft:#2a4a75; --panel:#0a1d36;
+    --accent:#ffc933; --on-accent:#0e2746;
+    --ok:#5ed39a; --bad:#ff8a72; --warn:#ffc933; --info:#7db3ff;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  font-family:Charter,"Iowan Old Style","Noto Serif",Georgia,serif;
+  font-size:1.0625rem; line-height:1.65;
+}
+.sans,h1,h2,h3,.btn,.bar,.tag,footer{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+code,pre,.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace}
+a{color:var(--info)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:46rem;margin:0 auto;padding:0 1.25rem}
+
+.bar{display:flex;justify-content:space-between;align-items:center;padding:1rem 0;font-size:.95rem}
+.bar b{font-weight:800;letter-spacing:.02em}
+.bar a{color:var(--ink)}
+
+.hero{display:grid;gap:1.5rem;padding:1.5rem 0 2.5rem}
+@media(min-width:44rem){.hero{grid-template-columns:1fr 20rem;align-items:center;gap:2rem}}
+h1{font-size:clamp(2.6rem,9vw,4.2rem);line-height:1;margin:0 0 1rem;font-weight:900;letter-spacing:-.02em}
+.lead{font-size:1.2rem;margin:0 0 1.5rem;max-width:30rem}
+.btns{display:flex;flex-wrap:wrap;gap:.75rem}
+.btn{display:inline-block;padding:.7rem 1.1rem;border:2px solid var(--line);color:var(--ink);text-decoration:none;font-weight:700;border-radius:3px;background:transparent}
+.btn.main{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+
+.plan{width:100%;max-width:22rem;height:auto;justify-self:center}
+.plan *{vector-effect:non-scaling-stroke}
+.plan .mur{stroke:var(--line);stroke-width:3;fill:none;stroke-linecap:square}
+.plan .fin{stroke:var(--line);stroke-width:1.5;fill:none}
+.plan .tirets{stroke-dasharray:6 5}
+.plan text{fill:var(--ink);font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.plan .nom{font-size:17px;font-weight:700}
+.plan .txt{font-size:12.5px;fill:var(--muted)}
+.plan .pt{font-size:11.5px;fill:var(--muted)}
+.legende{font-size:.85rem;color:var(--muted);margin:.4rem 0 0;text-align:center}
+
+section{padding:1.5rem 0;border-top:2px solid var(--line)}
+h2{font-size:1.7rem;line-height:1.2;margin:0 0 1rem;font-weight:800}
+p{margin:0 0 1rem}
+
+.regles{list-style:none;margin:0;padding:0;display:grid;gap:.9rem}
+.regles li{padding-left:1rem;border-left:4px solid var(--accent)}
+.regles b{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+
+ol.etapes{list-style:none;margin:0 0 1rem;padding:0;display:grid;gap:1.1rem;counter-reset:e}
+ol.etapes li{counter-increment:e;display:grid;grid-template-columns:2rem 1fr;gap:.2rem .75rem}
+ol.etapes li::before{content:counter(e);grid-row:1/3;font:800 1.2rem system-ui,sans-serif;color:var(--on-accent);background:var(--accent);width:2rem;height:2rem;border-radius:50%;display:grid;place-items:center;margin-top:.2rem}
+ol.etapes p{margin:0;grid-column:2}
+.cmd{grid-column:2;display:flex;align-items:stretch;background:var(--panel);border:1px solid var(--soft);border-radius:3px;min-width:0}
+.cmd code{flex:1;padding:.55rem .75rem;overflow-x:auto;white-space:pre;font-size:.92rem;min-width:0}
+.cmd button{border:0;border-left:1px solid var(--soft);background:transparent;color:var(--info);font:600 .85rem system-ui,sans-serif;padding:0 .8rem;cursor:pointer}
+.cmd button:hover{background:var(--soft)}
+.bloc{display:grid;gap:.5rem;margin:0 0 1rem}
+
+.cas{margin:0 0 1.25rem}
+.cas .ou{margin:0 0 .35rem;font:700 .95rem system-ui,sans-serif}
+.ligne{display:grid;grid-template-columns:4.2rem 1fr;align-items:center;gap:.5rem;margin:0 0 .3rem}
+.tag{font-size:.85rem;font-weight:700}
+.ligne.avant .tag{color:var(--bad)}
+.ligne.apres .tag{color:var(--ok)}
+.ligne pre{margin:0;padding:.5rem .75rem;background:var(--panel);border:1px solid var(--soft);border-radius:3px;overflow-x:auto;font-size:.92rem}
+.ligne.avant pre{border-left:4px solid var(--bad)}
+.ligne.apres pre{border-left:4px solid var(--ok)}
+ins{text-decoration:none;color:var(--on-accent);background:linear-gradient(var(--accent),var(--accent)) no-repeat left/100% 100%;padding:0 .08em;animation:pose .5s ease-out both;animation-delay:var(--d,.6s)}
+@keyframes pose{from{background-size:0 100%}to{background-size:100% 100%}}
+@media(prefers-reduced-motion:reduce){ins{animation:none}}
+.quoi{margin:.2rem 0 0 4.7rem;font-size:.95rem;color:var(--muted)}
+
+dl.verdicts{margin:0;display:grid;gap:1rem}
+dl.verdicts div{display:grid;grid-template-columns:2rem 1fr;gap:.1rem .75rem}
+dl.verdicts dt{grid-column:2;font:800 1rem system-ui,sans-serif}
+dl.verdicts dd{grid-column:2;margin:0}
+dl.verdicts div::before{grid-row:1/3;width:2rem;height:2rem;border-radius:3px;display:grid;place-items:center;font:800 1.1rem system-ui,sans-serif;color:var(--bg);margin-top:.1rem}
+.v-ok::before{content:"✓";background:var(--ok)}
+.v-bad::before{content:"✕";background:var(--bad)}
+.v-warn::before{content:"…";background:var(--warn)}
+.v-info::before{content:"?";background:var(--info)}
+.v-warn dt{color:var(--warn)}.v-ok dt{color:var(--ok)}.v-bad dt{color:var(--bad)}.v-info dt{color:var(--info)}
+@media(prefers-color-scheme:dark){.v-ok::before,.v-bad::before,.v-warn::before,.v-info::before{color:#0e2746}}
+
+ul.manque{margin:0;padding-left:1.2rem}
+ul.manque li{margin:0 0 .4rem}
+
+footer{padding:1.5rem 0 3rem;border-top:2px solid var(--line);font-size:.92rem;color:var(--muted)}
+footer p{margin:0 0 .4rem}
+footer a{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="bar">
+  <b>LA MAISON</b>
+  <a href="https://github.com/daboujohan-hub/maison-DAJ">Code sur GitHub</a>
+</div>
+
+<header class="hero">
+  <div>
+    <h1>LA MAISON</h1>
+    <p class="lead">Un mécanicien de poche pour les projets Python cassés. Elle travaille dans Termux, sans internet, toujours sur une copie.</p>
+    <div class="btns">
+      <a class="btn main" href="#installer">Installer</a>
+      <a class="btn" href="https://github.com/daboujohan-hub/maison-DAJ">Voir le code</a>
+    </div>
+  </div>
+
+  <figure style="margin:0">
+    <svg class="plan" viewBox="0 0 360 340" role="img" aria-labelledby="plan-t plan-d">
+      <title id="plan-t">Plan de la maison</title>
+      <desc id="plan-d">Trois pièces l’une sous l’autre : entree, travail avec la copie de sécurité et la copie de travail, et sortie, dessinée en pointillés car elle n’est pas encore construite.</desc>
+      <defs>
+        <marker id="pointe" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0L10 5L0 10z" fill="currentColor" style="color:var(--line)"/>
+        </marker>
+      </defs>
+      <rect class="mur" x="10" y="10" width="340" height="320"/>
+      <path class="mur" d="M10 110H150M210 110H350M10 230H150M210 230H350"/>
+      <rect class="fin tirets" x="22" y="242" width="316" height="76"/>
+
+      <text class="nom" x="30" y="44">entree</text>
+      <text class="txt" x="30" y="66">ton projet cassé</text>
+      <text class="pt" x="30" y="86">on n’y touche jamais</text>
+
+      <text class="nom" x="30" y="136">travail</text>
+      <rect class="fin" x="30" y="152" width="135" height="62"/>
+      <text class="nom" x="40" y="174" style="font-size:13px">securite</text>
+      <text class="pt" x="40" y="196">on n’y touche plus</text>
+      <rect class="fin" x="195" y="152" width="135" height="62"/>
+      <text class="nom" x="205" y="174" style="font-size:13px">copie</text>
+      <text class="pt" x="205" y="196">celle qu’on répare</text>
+
+      <text class="nom" x="36" y="272">sortie</text>
+      <text class="txt" x="36" y="298">projet réparé, bientôt</text>
+
+      <path class="fin" d="M180 76V148" marker-end="url(#pointe)"/>
+      <path class="fin tirets" d="M180 176V262" marker-end="url(#pointe)"/>
+    </svg>
+    <figcaption class="legende">Trait plein : construit. Pointillés : pas encore.</figcaption>
+  </figure>
+</header>
+
+<section>
+  <h2>Les trois règles de la maison</h2>
+  <ul class="regles">
+    <li><b>Elle ne touche jamais à l’original.</b> Elle travaille sur une copie, et vérifie que la copie est identique avant de commencer.</li>
+    <li><b>Elle ne ment jamais.</b> Si elle n’a pas pu réparer, elle le dit. Un programme qui tourne encore n’est pas « ça marche ».</li>
+    <li><b>Elle parle en français simple.</b> Pas de gros mots compliqués, le rapport s’écrit pour être lu.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Comment l’utiliser</h2>
+  <ol class="etapes">
+    <li>
+      <p>Construis la maison, une seule fois.</p>
+      <div class="cmd"><code>maison construire</code><button type="button" data-copy="maison construire">Copier</button></div>
+    </li>
+    <li>
+      <p>Mets ton projet cassé dans la pièce <span class="mono">entree</span>.</p>
+      <div class="cmd"><code>cp mon_jeu.py ma-maison/entree/</code><button type="button" data-copy="cp mon_jeu.py ma-maison/entree/">Copier</button></div>
+    </li>
+    <li>
+      <p>Fais la copie de sécurité et la copie de travail.</p>
+      <div class="cmd"><code>maison copier</code><button type="button" data-copy="maison copier">Copier</button></div>
+    </li>
+    <li>
+      <p>Répare la copie de travail. Le rapport s’écrit tout seul.</p>
+      <div class="cmd"><code>maison reparer</code><button type="button" data-copy="maison reparer">Copier</button></div>
+    </li>
+    <li>
+      <p>Lance la copie pour voir. Elle te demande confirmation avant.</p>
+      <div class="cmd"><code>maison tester</code><button type="button" data-copy="maison tester">Copier</button></div>
+    </li>
+  </ol>
+  <p>Lance toujours les commandes depuis le même dossier : c’est là que se trouve <span class="mono">ma-maison</span>. Le projet réparé reste dans <span class="mono">ma-maison/travail/…/copie/</span>, car la pièce <span class="mono">sortie</span> n’est pas encore construite.</p>
+</section>
+
+<section>
+  <h2>Ce qu’elle répare</h2>
+  <p>Seulement les cas dont elle est sûre. Après chaque correction, Python revérifie le fichier. Si ça n’améliore rien, elle annule. Voici un vrai rapport :</p>
+
+  <div class="cas">
+    <p class="ou">jeu.py, ligne 2</p>
+    <div class="ligne avant"><span class="tag">avant</span><pre><code>print 'debut'</code></pre></div>
+    <div class="ligne apres"><span class="tag">après</span><pre><code>print<ins style="--d:.5s">(</ins>'debut'<ins style="--d:.8s">)</ins></code></pre></div>
+    <p class="quoi">Il manquait les parenthèses de print (Python 3).</p>
+  </div>
+
+  <div class="cas">
+    <p class="ou">jeu.py, ligne 4</p>
+    <div class="ligne avant"><span class="tag">avant</span><pre><code>if x == 1</code></pre></div>
+    <div class="ligne apres"><span class="tag">après</span><pre><code>if x == 1<ins style="--d:1.1s">:</ins></code></pre></div>
+    <p class="quoi">Il manquait les deux-points à la fin de la ligne.</p>
+  </div>
+
+  <div class="cas">
+    <p class="ou">jeu.py, ligne 5</p>
+    <div class="ligne avant"><span class="tag">avant</span><pre><code>print('un'</code></pre></div>
+    <div class="ligne apres"><span class="tag">après</span><pre><code>print('un'<ins style="--d:1.4s">)</ins></code></pre></div>
+    <p class="quoi">Une parenthèse n’était jamais fermée.</p>
+  </div>
+
+  <p>Tout le reste, elle n’y touche pas. Elle écrit dans le rapport où regarder. Pour un paquet manquant comme <span class="mono">pygame</span>, elle te donne la commande <span class="mono">pip install</span> à faire quand tu auras internet.</p>
+</section>
+
+<section>
+  <h2>Ce que le test peut répondre</h2>
+  <dl class="verdicts">
+    <div class="v-ok"><dt>Ça marche</dt><dd>Le programme s’est lancé et terminé sans erreur. Ça ne prouve pas qu’il fait ce que tu veux.</dd></div>
+    <div class="v-bad"><dt>Ça plante</dt><dd>Il s’est arrêté avec une erreur. Elle te l’explique en français, puis refait un diagnostic.</dd></div>
+    <div class="v-warn"><dt>Il tourne encore</dt><dd>Un jeu ou un serveur qui ne s’arrête pas. Elle ne dit pas « ça marche », elle dit qu’elle ne sait pas.</dd></div>
+    <div class="v-info"><dt>Je ne sais pas</dt><dd>Elle ne sait pas quel fichier lancer. Tu le lui dis avec <span class="mono">--fichier nom.py</span>.</dd></div>
+  </dl>
+</section>
+
+<section id="installer">
+  <h2>Installer</h2>
+  <p>Version 0.1.0, en développement. Il faut internet une seule fois, pour l’installation.</p>
+  <div class="bloc">
+    <div class="cmd"><code>pkg install python git</code><button type="button" data-copy="pkg install python git">Copier</button></div>
+    <div class="cmd"><code>pip install git+https://github.com/daboujohan-hub/maison-DAJ.git</code><button type="button" data-copy="pip install git+https://github.com/daboujohan-hub/maison-DAJ.git">Copier</button></div>
+    <div class="cmd"><code>maison --version</code><button type="button" data-copy="maison --version">Copier</button></div>
+  </div>
+</section>
+
+<section>
+  <h2>Pas encore là</h2>
+  <ul class="manque">
+    <li>Python seulement. HTML, JavaScript et Bash viendront un par un.</li>
+    <li>La pièce <span class="mono">sortie</span> : pour l’instant, on récupère le projet réparé à la main.</li>
+    <li>Le ménage avant la réparation, et la recherche d’un paquet déjà présent dans le téléphone.</li>
+    <li>La publication avec <span class="mono">pip install la-maison</span> : elle viendra plus tard.</li>
+  </ul>
+</section>
+
+<footer>
+  <p>LA MAISON, version 0.1.0, en développement. Un projet de DAJ.</p>
+  <p><a href="https://github.com/daboujohan-hub/maison-DAJ">Code</a> et <a href="https://github.com/daboujohan-hub/maison-DAJ/blob/main/SUIVI.md">suivi du projet</a> sur GitHub.</p>
+</footer>
+
+</div>
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var texte = b.getAttribute('data-copy');
+    var fini = function () {
+      var avant = b.textContent;
+      b.textContent = 'Copié';
+      setTimeout(function () { b.textContent = avant; }, 1500);
+    };
+    try {
+      navigator.clipboard.writeText(texte).then(fini, function () {});
+    } catch (e) {}
+  });
+});
+</script>
+</body>
+</html>
